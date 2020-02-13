@@ -8,6 +8,7 @@ custom:
 
 plugins:
   - serverless-webpack
+  - serverless-iam-roles-per-function
 
 provider:
   name: aws
@@ -33,6 +34,21 @@ functions:
           method: get
           path: hello
 
+  CreateShoppingItem:
+    handler: src/lambda/http/createShoppingItem.handler
+    events:
+      - http:
+          method: post
+          path: shoppingItem
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
@@ -45,6 +61,15 @@ resources:
         ResponseType: DEFAULT_4XX
         RestApiId:
           Ref: ApiGatewayRestApi
+
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
 
     ShoppingItemsDynamoDBTable:
       Type: "AWS::DynamoDB::Table"
