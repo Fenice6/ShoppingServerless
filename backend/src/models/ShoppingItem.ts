@@ -7,4 +7,5 @@ export interface ShoppingItem {
   price: number
   hide: boolean
   attachmentUrl?: string
+  buyerId?: string
 }
