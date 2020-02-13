@@ -29,6 +29,22 @@ export class ShoppingAccess {
         return shoppingItem
       }
 
+      async getSoppingItemsByUserId(userId: string): Promise<ShoppingItem[]> {
+        console.log("Starting getSoppingItemsByUserId");
+        const result = await this.docClient.query({
+          TableName: this.shopItemsTable,
+          IndexName: this.userIndex,
+          KeyConditionExpression: '#k = :uId ',
+          ExpressionAttributeNames: {'#k' : 'userId'},
+          ExpressionAttributeValues:{':uId' : userId}
+        }).promise()
+        console.log("Completed getSoppingItemsByUserId");
+        console.log("Found " + result.Count + " elements");
+        const items = result.Items
+        console.log(items);
+        return items as ShoppingItem[]
+      }
+
 }
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {

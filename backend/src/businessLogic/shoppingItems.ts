@@ -26,3 +26,10 @@ export async function createShoppingItem(
       hide: false
     })
   }
+
+  export async function getAllShoppingItemsOfUser(jwtToken: string): Promise<ShoppingItem[]> {
+
+    const userId = parseUserId(jwtToken)
+  
+    return shoppingAccess.getSoppingItemsByUserId(userId)
+  }
