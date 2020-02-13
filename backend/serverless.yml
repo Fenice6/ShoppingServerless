@@ -1,0 +1,145 @@
+service:
+  name: serverless-shopping-app
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+plugins:
+  - serverless-webpack
+  - serverless-iam-roles-per-function
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-west-2'}
+
+  apiGateway:
+    minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    SHOP_ITEMS_TABLE: ShoppingItems-${self:provider.stage}
+    USER_ID_INDEX: UserIdIndex
+    STATUS_INDEX: StatusIndex
+    SHOPPING_ITEM_ID_INDEX: ShoppingIdIndex
+    SHOPPING_S3_BUCKET: serverless-shopping-baiu7bls-${self:provider.stage}
+    SIGNED_URL_EXPIRATION: 300
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          method: get
+          path: hello
+
+  CreateShoppingItem:
+    handler: src/lambda/http/createShoppingItem.handler
+    events:
+      - http:
+          method: post
+          path: shoppingItem
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+
+  GetShoppingItemsOfUser:
+    handler: src/lambda/http/getShoppingItemsOfUser.handler
+    events:
+      - http:
+          method: get
+          path: shoppingItemsOfUser
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}
+
+  GetAllItems:
+    handler: src/lambda/http/getAllItems.handler
+    events:
+      - http:
+          method: get
+          path: shoppingItems
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.STATUS_INDEX}
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
+
+    ShoppingItemsDynamoDBTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: shoppingId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: N
+        KeySchema:
+          - AttributeName: shoppingId
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.SHOP_ITEMS_TABLE}
+        GlobalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.USER_ID_INDEX}
+            KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+            KeySchema:
+            - AttributeName: shoppingId
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.STATUS_INDEX}
+            KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+              
