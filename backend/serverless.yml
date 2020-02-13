@@ -23,6 +23,7 @@ provider:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     SHOP_ITEMS_TABLE: ShoppingItems-${self:provider.stage}
     USER_ID_INDEX: UserIdIndex
+    SHOPPING_ITEM_ID_INDEX: ShoppingIdIndex
     SHOPPING_S3_BUCKET: serverless-shopping-baiu7bls-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
 
@@ -111,3 +112,11 @@ resources:
               KeyType: HASH
             Projection:
               ProjectionType: ALL
+          - IndexName: ${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+            KeySchema:
+            - AttributeName: shoppingId
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+              
