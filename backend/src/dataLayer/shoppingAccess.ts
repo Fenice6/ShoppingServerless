@@ -33,8 +33,8 @@ export class ShoppingAccess {
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {
     console.log('Creating a local DynamoDB instance')
-    AWSXRay.setContextMissingStrategy("LOG_ERROR"); //setta un contesto che a volte salta 
-    return new XAWS.DynamoDB.DocumentClient({ //Qui dobbiamo usare l'istanxa xray
+    AWSXRay.setContextMissingStrategy("LOG_ERROR"); 
+    return new XAWS.DynamoDB.DocumentClient({
       region: 'localhost',
       endpoint: 'http://localhost:8000'
     })
