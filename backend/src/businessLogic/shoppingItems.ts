@@ -23,6 +23,18 @@ export async function createShoppingItem(
       price: createShoppingItemRequest.price,
       description: ((createShoppingItemRequest.description)?createShoppingItemRequest.description : null),
       createdAt: new Date().toISOString(),
-      hide: false
+      status: 0
     })
+  }
+
+  export async function getAllShoppingItemsOfUser(jwtToken: string): Promise<ShoppingItem[]> {
+
+    const userId = parseUserId(jwtToken)
+  
+    return shoppingAccess.getShoppingItemsByUserId(userId)
+  }
+  
+  export async function getAllVisibleShoppingItems(): Promise<ShoppingItem[]> {
+  
+    return shoppingAccess.getVisibleShoppingItems();
   }

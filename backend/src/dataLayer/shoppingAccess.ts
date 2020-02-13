@@ -15,6 +15,8 @@ export class ShoppingAccess {
         private readonly docClient: DocumentClient = createDynamoDBClient(), //to use dynamoDB
         private readonly shopItemsTable = process.env.SHOP_ITEMS_TABLE, //name of table for shopping items
         private readonly userIndex = process.env.USER_ID_INDEX, //index name for user
+        private readonly shoppingItemIdIndex = process.env.SHOPPING_ITEM_ID_INDEX, //index id
+        private readonly statusIndex = process.env.STATUS_INDEX,
         private readonly bucketName = process.env.SHOPPING_S3_BUCKET, //baket name
         private readonly urlExpiration = process.env.SIGNED_URL_EXPIRATION) { //when url expire
       }
@@ -27,6 +29,58 @@ export class ShoppingAccess {
         }).promise()
         console.log("Completed createShoppingItem");
         return shoppingItem
+      }
+
+      async getShoppingItemsByUserId(userId: string): Promise<ShoppingItem[]> {
+        console.log("Starting getSoppingItemsByUserId");
+        const result = await this.docClient.query({
+          TableName: this.shopItemsTable,
+          IndexName: this.userIndex,
+          KeyConditionExpression: '#k = :uId ',
+          ExpressionAttributeNames: {'#k' : 'userId'},
+          ExpressionAttributeValues:{':uId' : userId}
+        }).promise()
+        console.log("Completed getSoppingItemsByUserId");
+        console.log("Found " + result.Count + " elements");
+        const items = result.Items
+        console.log(items);
+        return items as ShoppingItem[]
+      }
+
+      async getShoppingItemById(key: any): Promise<ShoppingItem> {
+        console.log("Starting getShoppingItemById");
+        const result = await this.docClient.query({
+          TableName: this.shopItemsTable,
+          IndexName: this.shoppingItemIdIndex,
+          KeyConditionExpression: '#k = :id ',
+          ExpressionAttributeNames: {'#k' : 'shoppingId'},
+          ExpressionAttributeValues:{':id' : key.shoppingId}
+        }).promise()
+        console.log("Completed getShoppingItemById");
+        console.log("Found " + result.Count + " element (it must be unique)");
+        if (result.Count == 0)
+          throw new Error('Element not found')
+        if (result.Count > 1)
+          throw new Error('shoppingId is not Unique')
+        const item = result.Items[0]
+        console.log(item);
+        return item as ShoppingItem
+      }
+
+      async getVisibleShoppingItems(): Promise<ShoppingItem[]> {
+        console.log("Starting getVisibleShoppingItems");
+        const result = await this.docClient.query({
+          TableName: this.shopItemsTable,
+          IndexName: this.statusIndex,
+          KeyConditionExpression: '#s = :val ',
+          ExpressionAttributeNames: {'#s' : 'status'},
+          ExpressionAttributeValues:{':val' : 0}
+        }).promise()
+        console.log("Completed getVisibleShoppingItems");
+        console.log("Found " + result.Count + " elements");
+        const items = result.Items
+        console.log(items);
+        return items as ShoppingItem[]
       }
 
 }

@@ -5,6 +5,7 @@ export interface ShoppingItem {
   name: string
   description?: string
   price: number
-  hide: boolean
+  status: number
   attachmentUrl?: string
+  buyerId?: string
 }

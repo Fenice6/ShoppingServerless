@@ -23,6 +23,8 @@ provider:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     SHOP_ITEMS_TABLE: ShoppingItems-${self:provider.stage}
     USER_ID_INDEX: UserIdIndex
+    STATUS_INDEX: StatusIndex
+    SHOPPING_ITEM_ID_INDEX: ShoppingIdIndex
     SHOPPING_S3_BUCKET: serverless-shopping-baiu7bls-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
 
@@ -48,6 +50,36 @@ functions:
       Action:
         - dynamodb:PutItem
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+
+  GetShoppingItemsOfUser:
+    handler: src/lambda/http/getShoppingItemsOfUser.handler
+    events:
+      - http:
+          method: get
+          path: shoppingItemsOfUser
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}
+
+  GetAllItems:
+    handler: src/lambda/http/getAllItems.handler
+    events:
+      - http:
+          method: get
+          path: shoppingItems
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.STATUS_INDEX}
 
 resources:
   Resources:
@@ -81,6 +113,8 @@ resources:
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
+          - AttributeName: status
+            AttributeType: N
         KeySchema:
           - AttributeName: shoppingId
             KeyType: HASH
@@ -95,3 +129,17 @@ resources:
               KeyType: HASH
             Projection:
               ProjectionType: ALL
+          - IndexName: ${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+            KeySchema:
+            - AttributeName: shoppingId
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.STATUS_INDEX}
+            KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+              
