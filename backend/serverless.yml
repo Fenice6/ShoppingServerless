@@ -2,6 +2,8 @@ service:
   name: serverless-shopping-app
 
 custom:
+  shoppingTopicName: shoppingTopic-${self:provider.stage}
+
   webpack:
     webpackConfig: ./webpack.config.js
     includeModules: true
@@ -81,6 +83,72 @@ functions:
         - dynamodb:Query
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.STATUS_INDEX}
 
+  UpdateShoppingItem:
+    handler: src/lambda/http/updateShoppingItem.handler
+    events:
+      - http:
+          method: patch
+          path: shoppingItem/{shoppingId}
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+
+  GenerateUploadUrl:
+    handler: src/lambda/http/generateUploadUrl.handler
+    events:
+      - http:
+          method: post
+          path: shoppingItem/{shoppingId}/attachment
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+      Resource: arn:aws:s3:::${self:provider.environment.SHOPPING_S3_BUCKET}/*
+
+  DeleteShoppingItem:
+    handler: src/lambda/http/deleteShoppingItem.handler
+    events:
+      - http:
+          method: delete
+          path: shoppingItem/{shoppingId}
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DeleteItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:DeleteObject
+      Resource: arn:aws:s3:::${self:provider.environment.SHOPPING_S3_BUCKET}/*
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
@@ -141,5 +209,67 @@ resources:
               KeyType: HASH
             Projection:
               ProjectionType: ALL
+
+    ShoppingTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: Shopping bucket topic #Human readable name
+        TopicName: ${self:custom.shoppingTopicName}
+        
+    SNSTopicPolicy:
+      Type: AWS::SNS::TopicPolicy
+      Properties:
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                AWS: "*"
+              Action: sns:Publish
+              Resource:
+                !Ref ShoppingTopic 
+              Condition:
+                ArnLike:
+                  AWS:SourceArn: arn:aws:s3:::${self:provider.environment.SHOPPING_S3_BUCKET}
+        Topics:
+          - !Ref ShoppingTopic
+
+    AttachmentsBucket:
+      Type: AWS::S3::Bucket
+      DependsOn: SNSTopicPolicy
+      Properties:
+        BucketName: ${self:provider.environment.SHOPPING_S3_BUCKET}
+        NotificationConfiguration:
+          TopicConfigurations:
+            - Event: s3:ObjectCreated:Put
+              Topic: !Ref ShoppingTopic #Sending to topic not lambda
+        CorsConfiguration:
+          CorsRules:
+            -
+              AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: MyPolicy
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.SHOPPING_S3_BUCKET}/*'
+        Bucket: !Ref AttachmentsBucket
 
               
