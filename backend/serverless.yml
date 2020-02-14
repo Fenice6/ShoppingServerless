@@ -81,6 +81,25 @@ functions:
         - dynamodb:Query
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.STATUS_INDEX}
 
+  UpdateShoppingItem:
+    handler: src/lambda/http/updateShoppingItem.handler
+    events:
+      - http:
+          method: patch
+          path: shoppingItem/{shoppingId}
+          cors: true
+          # authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
