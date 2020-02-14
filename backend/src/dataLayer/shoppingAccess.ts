@@ -83,6 +83,55 @@ export class ShoppingAccess {
         return items as ShoppingItem[]
       }
 
+      async updateShoppingItem(key: any, toUpdate: any): Promise<ShoppingItem> {
+        console.log("Starting updateShoppingItem" );
+        const res = await this.docClient.update({
+          TableName: this.shopItemsTable,
+          Key: key,
+          UpdateExpression: 'set #n = :n, #d = :d, #p = :p',
+          //ConditionExpression: '#a < :MAX',
+          ExpressionAttributeNames: {'#n' : 'name', '#d' : 'description', '#p' : 'price'},
+          ExpressionAttributeValues:{
+            ':n' : toUpdate.name,
+            ':d' : toUpdate.description,
+            ':p' : toUpdate.price
+          },
+          ReturnValues: "ALL_NEW" //All attribute of element
+        }).promise()
+        console.log("Completed updateShoppingItem");
+    
+        return res.$response.data as ShoppingItem
+      }
+
+      async updateUrlOnShoppingItem(key: any): Promise<ShoppingItem> {
+        console.log("Starting updateUrlOnShoppingItem" );
+        const res = await this.docClient.update({
+          TableName: this.shopItemsTable,
+          Key: key,
+          UpdateExpression: 'set #u = :u',
+          //ConditionExpression: '#a < :MAX',
+          ExpressionAttributeNames: {'#u' : 'attachmentUrl'},
+          ExpressionAttributeValues:{
+            ':u' : `https://${this.bucketName}.s3.amazonaws.com/${key.shoppingId}`
+          },
+          ReturnValues: "ALL_NEW" //All attribute of element
+        }).promise()
+        console.log("Completed updateUrlOnShoppingItem");
+    
+        return res.$response.data as ShoppingItem
+      }
+
+      async getUploadUrl(shoppingId: string): Promise<string> {
+        console.log("Starting getUploadUrl");
+        const ret = await s3.getSignedUrl('putObject', {
+          Bucket: this.bucketName,
+          Key: shoppingId,
+          Expires: parseInt(this.urlExpiration) //operatore unario per essere sicuro venga castato a numero
+        })
+        console.log("Completed getUploadUrl");
+        return ret
+      }
+
 }
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {
