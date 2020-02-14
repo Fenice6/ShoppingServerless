@@ -59,3 +59,26 @@ export async function createShoppingItem(
     updateShoppingItemRequest)
     return res
   }
+
+  export async function generateUploadUrl(
+    shoppingId: string,
+    jwtToken: string
+  ): Promise<any> {
+  
+    parseUserId(jwtToken)
+    
+    const element = await shoppingAccess.getShoppingItemById({shoppingId: shoppingId})
+
+  
+    const uploadUrl = await shoppingAccess.getUploadUrl(shoppingId)
+    const res = await shoppingAccess.updateUrlOnShoppingItem
+    (
+      { //Key
+        shoppingId: shoppingId,
+        createdAt: element.createdAt
+      }
+    )
+    console.log(JSON.stringify(res))
+    return {newShoppingItem: res, uploadUrl: uploadUrl}
+  
+  }

@@ -103,6 +103,35 @@ export class ShoppingAccess {
         return res.$response.data as ShoppingItem
       }
 
+      async updateUrlOnShoppingItem(key: any): Promise<ShoppingItem> {
+        console.log("Starting updateUrlOnShoppingItem" );
+        const res = await this.docClient.update({
+          TableName: this.shopItemsTable,
+          Key: key,
+          UpdateExpression: 'set #u = :u',
+          //ConditionExpression: '#a < :MAX',
+          ExpressionAttributeNames: {'#u' : 'attachmentUrl'},
+          ExpressionAttributeValues:{
+            ':u' : `https://${this.bucketName}.s3.amazonaws.com/${key.shoppingId}`
+          },
+          ReturnValues: "ALL_NEW" //All attribute of element
+        }).promise()
+        console.log("Completed updateUrlOnShoppingItem");
+    
+        return res.$response.data as ShoppingItem
+      }
+
+      async getUploadUrl(shoppingId: string): Promise<string> {
+        console.log("Starting getUploadUrl");
+        const ret = await s3.getSignedUrl('putObject', {
+          Bucket: this.bucketName,
+          Key: shoppingId,
+          Expires: parseInt(this.urlExpiration) //operatore unario per essere sicuro venga castato a numero
+        })
+        console.log("Completed getUploadUrl");
+        return ret
+      }
+
 }
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {
