@@ -132,6 +132,47 @@ export class ShoppingAccess {
         return ret
       }
 
+      async deleteImageS3(shoppingId: string): Promise<boolean> {
+        console.log("Starting deleteImageS3");
+        await s3.deleteObject({
+          Bucket: this.bucketName,
+          Key: shoppingId
+        })
+        console.log("Completed deleteImageS3");
+        return true
+      }
+
+      async getImageS3(shoppingId: string): Promise<any> {
+        console.log("Starting getImageS3");
+        const ret =  await s3.getObject({
+          Bucket: this.bucketName,
+          Key: shoppingId
+        })
+        console.log("Completed getImageS3");
+        return ret
+      }
+    
+      async deleteShoppingItem(element: ShoppingItem): Promise<boolean> {
+        console.log("Starting deleteShoppingItem");
+        if(await this.getImageS3(element.shoppingId))
+          await this.deleteImageS3(element.shoppingId)
+        const result = await this.docClient.delete({
+          TableName: this.shopItemsTable,
+          Key:
+          {
+            shoppingId: element.shoppingId,
+            createdAt: element.createdAt
+          }
+        }).promise()
+        console.log("Completed deleteShoppingItem");
+        if (result.$response.error)
+        {
+          console.error(result.$response.error)
+          return false
+        }
+        return true
+      }
+
 }
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {
