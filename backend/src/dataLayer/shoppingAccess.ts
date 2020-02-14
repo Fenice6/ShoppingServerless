@@ -83,6 +83,26 @@ export class ShoppingAccess {
         return items as ShoppingItem[]
       }
 
+      async updateShoppingItem(key: any, toUpdate: any): Promise<ShoppingItem> {
+        console.log("Starting updateShoppingItem" );
+        const res = await this.docClient.update({
+          TableName: this.shopItemsTable,
+          Key: key,
+          UpdateExpression: 'set #n = :n, #d = :d, #p = :p',
+          //ConditionExpression: '#a < :MAX',
+          ExpressionAttributeNames: {'#n' : 'name', '#d' : 'description', '#p' : 'price'},
+          ExpressionAttributeValues:{
+            ':n' : toUpdate.name,
+            ':d' : toUpdate.description,
+            ':p' : toUpdate.price
+          },
+          ReturnValues: "ALL_NEW" //All attribute of element
+        }).promise()
+        console.log("Completed updateShoppingItem");
+    
+        return res.$response.data as ShoppingItem
+      }
+
 }
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {
