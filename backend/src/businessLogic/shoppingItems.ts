@@ -82,3 +82,16 @@ export async function createShoppingItem(
     return {newShoppingItem: res, uploadUrl: uploadUrl}
   
   }
+
+  export async function deleteShoppingItem(
+    shoppingId: string,
+    jwtToken: string
+  ): Promise<boolean> {
+  
+    parseUserId(jwtToken)
+    
+    const element = await shoppingAccess.getShoppingItemById({shoppingId: shoppingId})
+  
+    return await shoppingAccess.deleteShoppingItem(element)
+  
+  }
