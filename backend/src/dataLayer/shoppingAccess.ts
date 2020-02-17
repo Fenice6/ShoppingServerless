@@ -175,6 +175,29 @@ export class ShoppingAccess {
         return true
       }
 
+      async setBuyerToItem(element: ShoppingItem, userId: string ): Promise<ShoppingItem> {
+        console.log("Starting setBuyerToItem");
+        const res = await this.docClient.update({
+          TableName: this.shopItemsTable,
+          Key: 
+          {
+            shoppingId: element.shoppingId,
+            createdAt: element.createdAt
+          },
+          UpdateExpression: 'set #s = :s, #b = :b',
+          //ConditionExpression: '#a < :MAX',
+          ExpressionAttributeNames: {'#s' : 'status', '#b' : 'buyerId'},
+          ExpressionAttributeValues:{
+            ':s' : ShoppingItemStatusEnum.Sold,
+            ':b' : userId
+          },
+          ReturnValues: "ALL_NEW" //All attribute of element
+        }).promise()
+        console.log("Completed setBuyerToItem");
+        
+        return res.$response.data as ShoppingItem
+      }
+
 }
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {
