@@ -8,6 +8,7 @@ const s3 = new XAWS.S3({ //S3 for image Item
 })
 
 import { ShoppingItem } from '../models/ShoppingItem'
+import { ShoppingItemStatusEnum } from '../models/enums/ShoppingItemStatusEnum'
 
 export class ShoppingAccess {
 
@@ -74,7 +75,7 @@ export class ShoppingAccess {
           IndexName: this.statusIndex,
           KeyConditionExpression: '#s = :val ',
           ExpressionAttributeNames: {'#s' : 'status'},
-          ExpressionAttributeValues:{':val' : 0}
+          ExpressionAttributeValues:{':val' : ShoppingItemStatusEnum.Available}
         }).promise()
         console.log("Completed getVisibleShoppingItems");
         console.log("Found " + result.Count + " elements");
@@ -88,13 +89,14 @@ export class ShoppingAccess {
         const res = await this.docClient.update({
           TableName: this.shopItemsTable,
           Key: key,
-          UpdateExpression: 'set #n = :n, #d = :d, #p = :p',
+          UpdateExpression: 'set #n = :n, #d = :d, #p = :p, #s = :s',
           //ConditionExpression: '#a < :MAX',
-          ExpressionAttributeNames: {'#n' : 'name', '#d' : 'description', '#p' : 'price'},
+          ExpressionAttributeNames: {'#n' : 'name', '#d' : 'description', '#p' : 'price', '#s' : 'status' },
           ExpressionAttributeValues:{
             ':n' : toUpdate.name,
             ':d' : toUpdate.description,
-            ':p' : toUpdate.price
+            ':p' : toUpdate.price,
+            ':s' : toUpdate.status
           },
           ReturnValues: "ALL_NEW" //All attribute of element
         }).promise()
@@ -171,6 +173,29 @@ export class ShoppingAccess {
           return false
         }
         return true
+      }
+
+      async setBuyerToItem(element: ShoppingItem, userId: string ): Promise<ShoppingItem> {
+        console.log("Starting setBuyerToItem");
+        const res = await this.docClient.update({
+          TableName: this.shopItemsTable,
+          Key: 
+          {
+            shoppingId: element.shoppingId,
+            createdAt: element.createdAt
+          },
+          UpdateExpression: 'set #s = :s, #b = :b',
+          //ConditionExpression: '#a < :MAX',
+          ExpressionAttributeNames: {'#s' : 'status', '#b' : 'buyerId'},
+          ExpressionAttributeValues:{
+            ':s' : ShoppingItemStatusEnum.Sold,
+            ':b' : userId
+          },
+          ReturnValues: "ALL_NEW" //All attribute of element
+        }).promise()
+        console.log("Completed setBuyerToItem");
+        
+        return res.$response.data as ShoppingItem
       }
 
 }

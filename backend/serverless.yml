@@ -38,6 +38,9 @@ functions:
           method: get
           path: hello
 
+  Auth:
+    handler: src/lambda/auth/auth0Authorizer.handler
+
   CreateShoppingItem:
     handler: src/lambda/http/createShoppingItem.handler
     events:
@@ -45,7 +48,7 @@ functions:
           method: post
           path: shoppingItem
           cors: true
-          # authorizer: Auth
+          authorizer: Auth
           reqValidatorName: RequestBodyValidator
     iamRoleStatements:
     - Effect: Allow
@@ -60,7 +63,7 @@ functions:
           method: get
           path: shoppingItemsOfUser
           cors: true
-          # authorizer: Auth
+          authorizer: Auth
           reqValidatorName: RequestBodyValidator
     iamRoleStatements:
     - Effect: Allow
@@ -75,7 +78,6 @@ functions:
           method: get
           path: shoppingItems
           cors: true
-          # authorizer: Auth
           reqValidatorName: RequestBodyValidator
     iamRoleStatements:
     - Effect: Allow
@@ -90,7 +92,7 @@ functions:
           method: patch
           path: shoppingItem/{shoppingId}
           cors: true
-          # authorizer: Auth
+          authorizer: Auth
           reqValidatorName: RequestBodyValidator
     iamRoleStatements:
     - Effect: Allow
@@ -109,7 +111,7 @@ functions:
           method: post
           path: shoppingItem/{shoppingId}/attachment
           cors: true
-          # authorizer: Auth
+          authorizer: Auth
           reqValidatorName: RequestBodyValidator
     iamRoleStatements:
     - Effect: Allow
@@ -132,7 +134,7 @@ functions:
           method: delete
           path: shoppingItem/{shoppingId}
           cors: true
-          # authorizer: Auth
+          authorizer: Auth
           reqValidatorName: RequestBodyValidator
     iamRoleStatements:
     - Effect: Allow
@@ -148,6 +150,25 @@ functions:
         - s3:GetObject
         - s3:DeleteObject
       Resource: arn:aws:s3:::${self:provider.environment.SHOPPING_S3_BUCKET}/*
+
+  BuyShoppingItem:
+    handler: src/lambda/http/buyShoppingItem.handler
+    events:
+      - http:
+          method: post
+          path: shoppingItem/{shoppingId}/buy
+          cors: true
+          authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
 
 resources:
   Resources:
