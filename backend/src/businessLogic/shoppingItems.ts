@@ -113,3 +113,16 @@ export async function createShoppingItem(
     return await shoppingAccess.deleteShoppingItem(element)
   
   }
+
+  export async function buyShoppingItem(
+    shoppingId: string,
+    jwtToken: string
+  ): Promise<ShoppingItem> {
+  
+    const userId = parseUserId(jwtToken)
+
+    const element = await shoppingAccess.getShoppingItemById({shoppingId: shoppingId})
+  
+    return await shoppingAccess.setBuyerToItem(element,userId)
+  
+  }
