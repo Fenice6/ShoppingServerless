@@ -151,6 +151,25 @@ functions:
         - s3:DeleteObject
       Resource: arn:aws:s3:::${self:provider.environment.SHOPPING_S3_BUCKET}/*
 
+  BuyShoppingItem:
+    handler: src/lambda/http/buyShoppingItem.handler
+    events:
+      - http:
+          method: post
+          path: shoppingItem/{shoppingId}/buy
+          cors: true
+          authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SHOP_ITEMS_TABLE}/index/${self:provider.environment.SHOPPING_ITEM_ID_INDEX}
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
