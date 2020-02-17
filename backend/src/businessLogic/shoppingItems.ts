@@ -1,6 +1,7 @@
 import * as uuid from 'uuid'
 
 import { ShoppingItem } from '../models/ShoppingItem'
+import { ShoppingItemStatusEnum } from '../models/enums/ShoppingItemStatusEnum'
 import { ShoppingAccess } from '../dataLayer/shoppingAccess'
 import { CreateShoppingItemRequest } from '../requests/CreateShoppingItemRequest'
 import { UpdateShoppingItemRequest } from '../requests/UpdateShoppingItemRequest'
@@ -24,7 +25,7 @@ export async function createShoppingItem(
       price: createShoppingItemRequest.price,
       description: ((createShoppingItemRequest.description)?createShoppingItemRequest.description : null),
       createdAt: new Date().toISOString(),
-      status: 0
+      status: ShoppingItemStatusEnum.Available
     })
   }
   
@@ -51,12 +52,29 @@ export async function createShoppingItem(
     
     const element = await shoppingAccess.getShoppingItemById({shoppingId: shoppingId})
   
+    var status
+    if(updateShoppingItemRequest.hidden)
+      status = ShoppingItemStatusEnum.Hidden
+    else
+      if(updateShoppingItemRequest.hidden === false)
+        status = ShoppingItemStatusEnum.Available
+      else
+        status = element.status
+    if(updateShoppingItemRequest.description === undefined)
+      updateShoppingItemRequest.description=element.description
+
+
     const res = await shoppingAccess.updateShoppingItem(
     { //Key
       shoppingId: shoppingId,
       createdAt: element.createdAt
     },
-    updateShoppingItemRequest)
+    { //To Update
+      name: updateShoppingItemRequest.name,
+      description: updateShoppingItemRequest.description,
+      price: updateShoppingItemRequest.price,
+      status: status
+    })
     return res
   }
 
