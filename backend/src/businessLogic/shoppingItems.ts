@@ -52,6 +52,9 @@ export async function createShoppingItem(
     
     const element = await shoppingAccess.getShoppingItemById({shoppingId: shoppingId})
   
+    if( element.status === ShoppingItemStatusEnum.Sold )
+      throw new Error("Can't update a sold item")
+
     var status
     if(updateShoppingItemRequest.hidden)
       status = ShoppingItemStatusEnum.Hidden
