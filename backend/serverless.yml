@@ -36,13 +36,6 @@ provider:
     SIGNED_URL_EXPIRATION: 300
 
 functions:
-  hello:
-    handler: handler.hello
-    events:
-      - http:
-          method: get
-          path: hello
-
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
