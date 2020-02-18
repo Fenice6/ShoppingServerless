@@ -9,6 +9,9 @@ const s3 = new XAWS.S3({ //S3 for image Item
 
 import { ShoppingItem } from '../models/ShoppingItem'
 import { ShoppingItemStatusEnum } from '../models/enums/ShoppingItemStatusEnum'
+import { createLogger } from '../utils/logger'
+
+const logger = createLogger('dataLayer-shoppingAccess')
 
 export class ShoppingAccess {
 
@@ -23,17 +26,17 @@ export class ShoppingAccess {
       }
     
       async createShoppingItem(shoppingItem: ShoppingItem): Promise<ShoppingItem> {
-        console.log("Starting createShoppingItem");
+        logger.info("Starting createShoppingItem");
         await this.docClient.put({
           TableName: this.shopItemsTable,
           Item: shoppingItem
         }).promise()
-        console.log("Completed createShoppingItem");
+        logger.info("Completed createShoppingItem");
         return shoppingItem
       }
 
       async getShoppingItemsByUserId(userId: string): Promise<ShoppingItem[]> {
-        console.log("Starting getSoppingItemsByUserId");
+        logger.info("Starting getSoppingItemsByUserId");
         const result = await this.docClient.query({
           TableName: this.shopItemsTable,
           IndexName: this.userIndex,
@@ -41,15 +44,15 @@ export class ShoppingAccess {
           ExpressionAttributeNames: {'#k' : 'userId'},
           ExpressionAttributeValues:{':uId' : userId}
         }).promise()
-        console.log("Completed getSoppingItemsByUserId");
-        console.log("Found " + result.Count + " elements");
+        logger.info("Completed getSoppingItemsByUserId");
+        logger.info("Found " + result.Count + " elements");
         const items = result.Items
-        console.log(items);
+        logger.info(items);
         return items as ShoppingItem[]
       }
 
       async getShoppingItemById(key: any): Promise<ShoppingItem> {
-        console.log("Starting getShoppingItemById");
+        logger.info("Starting getShoppingItemById");
         const result = await this.docClient.query({
           TableName: this.shopItemsTable,
           IndexName: this.shoppingItemIdIndex,
@@ -57,19 +60,19 @@ export class ShoppingAccess {
           ExpressionAttributeNames: {'#k' : 'shoppingId'},
           ExpressionAttributeValues:{':id' : key.shoppingId}
         }).promise()
-        console.log("Completed getShoppingItemById");
-        console.log("Found " + result.Count + " element (it must be unique)");
+        logger.info("Completed getShoppingItemById");
+        logger.info("Found " + result.Count + " element (it must be unique)");
         if (result.Count == 0)
           throw new Error('Element not found')
         if (result.Count > 1)
           throw new Error('shoppingId is not Unique')
         const item = result.Items[0]
-        console.log(item);
+        logger.info(item);
         return item as ShoppingItem
       }
 
       async getVisibleShoppingItems(): Promise<ShoppingItem[]> {
-        console.log("Starting getVisibleShoppingItems");
+        logger.info("Starting getVisibleShoppingItems")
         const result = await this.docClient.query({
           TableName: this.shopItemsTable,
           IndexName: this.statusIndex,
@@ -77,15 +80,15 @@ export class ShoppingAccess {
           ExpressionAttributeNames: {'#s' : 'status'},
           ExpressionAttributeValues:{':val' : ShoppingItemStatusEnum.Available}
         }).promise()
-        console.log("Completed getVisibleShoppingItems");
-        console.log("Found " + result.Count + " elements");
+        logger.info("Completed getVisibleShoppingItems")
+        logger.info("Found " + result.Count + " elements")
         const items = result.Items
-        console.log(items);
+        logger.info(items);
         return items as ShoppingItem[]
       }
 
       async updateShoppingItem(key: any, toUpdate: any): Promise<ShoppingItem> {
-        console.log("Starting updateShoppingItem" );
+        logger.info("Starting updateShoppingItem" );
         const res = await this.docClient.update({
           TableName: this.shopItemsTable,
           Key: key,
@@ -100,13 +103,13 @@ export class ShoppingAccess {
           },
           ReturnValues: "ALL_NEW" //All attribute of element
         }).promise()
-        console.log("Completed updateShoppingItem");
+        logger.info("Completed updateShoppingItem");
     
         return res.$response.data as ShoppingItem
       }
 
       async updateUrlOnShoppingItem(key: any): Promise<ShoppingItem> {
-        console.log("Starting updateUrlOnShoppingItem" );
+        logger.info("Starting updateUrlOnShoppingItem" );
         const res = await this.docClient.update({
           TableName: this.shopItemsTable,
           Key: key,
@@ -118,44 +121,44 @@ export class ShoppingAccess {
           },
           ReturnValues: "ALL_NEW" //All attribute of element
         }).promise()
-        console.log("Completed updateUrlOnShoppingItem");
+        logger.info("Completed updateUrlOnShoppingItem");
     
         return res.$response.data as ShoppingItem
       }
 
       async getUploadUrl(shoppingId: string): Promise<string> {
-        console.log("Starting getUploadUrl");
+        logger.info("Starting getUploadUrl");
         const ret = await s3.getSignedUrl('putObject', {
           Bucket: this.bucketName,
           Key: shoppingId,
           Expires: parseInt(this.urlExpiration) //operatore unario per essere sicuro venga castato a numero
         })
-        console.log("Completed getUploadUrl");
+        logger.info("Completed getUploadUrl");
         return ret
       }
 
       async deleteImageS3(shoppingId: string): Promise<boolean> {
-        console.log("Starting deleteImageS3");
+        logger.info("Starting deleteImageS3");
         await s3.deleteObject({
           Bucket: this.bucketName,
           Key: shoppingId
         })
-        console.log("Completed deleteImageS3");
+        logger.info("Completed deleteImageS3");
         return true
       }
 
       async getImageS3(shoppingId: string): Promise<any> {
-        console.log("Starting getImageS3");
+        logger.info("Starting getImageS3");
         const ret =  await s3.getObject({
           Bucket: this.bucketName,
           Key: shoppingId
         })
-        console.log("Completed getImageS3");
+        logger.info("Completed getImageS3");
         return ret
       }
     
       async deleteShoppingItem(element: ShoppingItem): Promise<boolean> {
-        console.log("Starting deleteShoppingItem");
+        logger.info("Starting deleteShoppingItem");
         if(await this.getImageS3(element.shoppingId))
           await this.deleteImageS3(element.shoppingId)
         const result = await this.docClient.delete({
@@ -166,17 +169,17 @@ export class ShoppingAccess {
             createdAt: element.createdAt
           }
         }).promise()
-        console.log("Completed deleteShoppingItem");
+        logger.info("Completed deleteShoppingItem");
         if (result.$response.error)
         {
-          console.error(result.$response.error)
+          logger.error(result.$response.error)
           return false
         }
         return true
       }
 
       async setBuyerToItem(element: ShoppingItem, userId: string ): Promise<ShoppingItem> {
-        console.log("Starting setBuyerToItem");
+        logger.info("Starting setBuyerToItem");
         const res = await this.docClient.update({
           TableName: this.shopItemsTable,
           Key: 
@@ -193,7 +196,7 @@ export class ShoppingAccess {
           },
           ReturnValues: "ALL_NEW" //All attribute of element
         }).promise()
-        console.log("Completed setBuyerToItem");
+        logger.info("Completed setBuyerToItem");
         
         return res.$response.data as ShoppingItem
       }
@@ -201,7 +204,7 @@ export class ShoppingAccess {
 }
 function createDynamoDBClient() { //check if we are using offline mode with environment variable
   if (process.env.IS_OFFLINE) {
-    console.log('Creating a local DynamoDB instance')
+    logger.info('Creating a local DynamoDB instance')
     AWSXRay.setContextMissingStrategy("LOG_ERROR"); 
     return new XAWS.DynamoDB.DocumentClient({
       region: 'localhost',
