@@ -3,11 +3,14 @@ import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
 
 import { generateUploadUrl } from '../../businessLogic/shoppingItems'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('generateUpdateUrlLambda')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const shoppingId = event.pathParameters.shoppingId
 
-  console.log(shoppingId);
+  logger.info(shoppingId);
   
   const authorization = event.headers.Authorization
   const split = authorization.split(' ')
