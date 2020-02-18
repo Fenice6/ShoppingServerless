@@ -13,6 +13,9 @@ plugins:
   - serverless-iam-roles-per-function
   - serverless-plugin-tracing
 
+package:
+  individually: true
+
 provider:
   name: aws
   runtime: nodejs12.x
