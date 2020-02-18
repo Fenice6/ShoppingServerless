@@ -6,6 +6,9 @@ import { ShoppingAccess } from '../dataLayer/shoppingAccess'
 import { CreateShoppingItemRequest } from '../requests/CreateShoppingItemRequest'
 import { UpdateShoppingItemRequest } from '../requests/UpdateShoppingItemRequest'
 import { parseUserId } from '../auth/utils'
+import { createLogger } from '../utils/logger'
+
+const logger = createLogger('businessLogic-shoppingItems')
 
 const shoppingAccess = new ShoppingAccess() //to access datas
 
@@ -99,7 +102,7 @@ export async function createShoppingItem(
         createdAt: element.createdAt
       }
     )
-    console.log(JSON.stringify(res))
+    logger.info(JSON.stringify(res))
     return {newShoppingItem: res, uploadUrl: uploadUrl}
   
   }

@@ -5,11 +5,14 @@ import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } f
 import { CreateShoppingItemRequest } from '../../requests/CreateShoppingItemRequest'
 
 import { createShoppingItem } from '../../businessLogic/shoppingItems'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('createShoppingItemLambda')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const newShoppingItem: CreateShoppingItemRequest = JSON.parse(event.body)
 
-  console.log(newShoppingItem);
+  logger.info(newShoppingItem);
   
   const authorization = event.headers.Authorization
   const split = authorization.split(' ')

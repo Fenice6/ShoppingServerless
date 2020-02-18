@@ -2,9 +2,12 @@ import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } f
 import 'source-map-support/register'
 
 import { getAllShoppingItemsOfUser } from '../../businessLogic/shoppingItems'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('getShoppingItemsOfUserLambda')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  console.log('Processing event: ', event)
+  logger.info('Processing event: ', event)
 
   const authorization = event.headers.Authorization
   const split = authorization.split(' ')
