@@ -58,7 +58,7 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader)
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
 
-  console.log(jwt);
+  logger.info(jwt);
 
   // Info here: https://auth0.com/blog/navigating-rs256-and-jwks/
   var jwts = await getJwtsToken(jwksUrl)

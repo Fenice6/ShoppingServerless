@@ -6,6 +6,9 @@ import { ShoppingAccess } from '../dataLayer/shoppingAccess'
 import { CreateShoppingItemRequest } from '../requests/CreateShoppingItemRequest'
 import { UpdateShoppingItemRequest } from '../requests/UpdateShoppingItemRequest'
 import { parseUserId } from '../auth/utils'
+import { createLogger } from '../utils/logger'
+
+const logger = createLogger('businessLogic-shoppingItems')
 
 const shoppingAccess = new ShoppingAccess() //to access datas
 
@@ -52,6 +55,9 @@ export async function createShoppingItem(
     
     const element = await shoppingAccess.getShoppingItemById({shoppingId: shoppingId})
   
+    if( element.status === ShoppingItemStatusEnum.Sold )
+      throw new Error("Can't update a sold item")
+
     var status
     if(updateShoppingItemRequest.hidden)
       status = ShoppingItemStatusEnum.Hidden
@@ -96,7 +102,7 @@ export async function createShoppingItem(
         createdAt: element.createdAt
       }
     )
-    console.log(JSON.stringify(res))
+    logger.info(JSON.stringify(res))
     return {newShoppingItem: res, uploadUrl: uploadUrl}
   
   }

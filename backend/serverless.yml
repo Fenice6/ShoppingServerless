@@ -11,6 +11,10 @@ custom:
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
+  - serverless-plugin-tracing
+
+package:
+  individually: true
 
 provider:
   name: aws
@@ -18,6 +22,10 @@ provider:
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'eu-west-2'}
+
+  tracing: # to enable xray
+    lambda: true # for lambda functions
+    apiGateway: true # for api gateway
 
   apiGateway:
     minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
@@ -31,13 +39,6 @@ provider:
     SIGNED_URL_EXPIRATION: 300
 
 functions:
-  hello:
-    handler: handler.hello
-    events:
-      - http:
-          method: get
-          path: hello
-
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
