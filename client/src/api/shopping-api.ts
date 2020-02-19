@@ -83,3 +83,16 @@ export async function getUploadUrl(
 export async function uploadFile(uploadUrl: string, file: Buffer): Promise<void> {
   await Axios.put(uploadUrl, file)
 }
+
+export async function buyShoppingItem(
+  idToken: string,
+  shoppingId: string
+  ): Promise<ShoppingItem> {
+    const response = await Axios.post(`${apiEndpoint}/shoppingItem/${shoppingId}/buy`, '', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      }
+    })
+    return response.data.result
+  }
