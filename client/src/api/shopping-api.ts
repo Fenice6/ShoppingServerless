@@ -2,6 +2,7 @@ import { apiEndpoint } from '../config'
 import { ShoppingItem } from '../types/ShoppingItem';
 import { CreateShoppingItemRequest } from '../types/CreateShoppingItemRequest';
 import Axios from 'axios'
+import { UpdateShoppingItemRequest } from '../types/UpdateShoppingItemRequest';
 
 export async function getVisibleShoppingItems(idToken: string): Promise<ShoppingItem[]> {
   console.log('Fetching visible shopping items')
@@ -39,4 +40,17 @@ export async function createShoppingItem(
     }
   })
   return response.data.item
+}
+
+export async function patchShoppingItem(
+  idToken: string,
+  shoppingId: string,
+  updatedShoppingItem: UpdateShoppingItemRequest
+): Promise<void> {
+  await Axios.patch(`${apiEndpoint}/shoppingItem/${shoppingId}`, JSON.stringify(updatedShoppingItem), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
 }
