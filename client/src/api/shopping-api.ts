@@ -54,3 +54,15 @@ export async function patchShoppingItem(
     }
   })
 }
+
+export async function deleteShoppingItem(
+  idToken: string,
+  shoppingId: string
+): Promise<void> {
+  await Axios.delete(`${apiEndpoint}/shoppingItem/${shoppingId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+}
