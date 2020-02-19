@@ -25,6 +25,8 @@ interface ShoppingState {
   visibleShoppingItems: ShoppingItem[]
   myShoppingItems: ShoppingItem[]
   newShoppingItemName: string
+  newShoppingItemDescription: string
+  newShoppingItemPrice: number
   loadingShoppingItems: boolean
 }
 
@@ -33,11 +35,40 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
     visibleShoppingItems: [],
     myShoppingItems: [],
     newShoppingItemName: '',
+    newShoppingItemDescription: '',
+    newShoppingItemPrice: -1,
     loadingShoppingItems: true
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ newShoppingItemName: event.target.value })
+  }
+
+  handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ newShoppingItemDescription: event.target.value })
+  }
+
+  handlePriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ newShoppingItemPrice: TryParseInt(event.target.value,-1) })
+  }
+
+  onShoppinItemCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
+    try {
+      const newShoppingItem = await createShoppingItem(this.props.auth.getIdToken(), {
+        name: this.state.newShoppingItemName,
+        description: this.state.newShoppingItemDescription,
+        price: this.state.newShoppingItemPrice
+      })
+      this.setState({
+        visibleShoppingItems: [...this.state.visibleShoppingItems, newShoppingItem],
+        myShoppingItems: [...this.state.myShoppingItems, newShoppingItem],
+        newShoppingItemName: '',
+        newShoppingItemDescription: '',
+        newShoppingItemPrice: -1
+      })
+    } catch {
+      alert('Shopping item creation failed')
+    }
   }
 
   onShoppingItemDelete = async (shoppingId: string) => {
@@ -78,8 +109,49 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
 
         {this.props.auth.isAuthenticated() && (<Header as="h2">My items</Header>)}
 
+        {this.props.auth.isAuthenticated() && this.renderCreateSHoppinItemInput()}
         {this.props.auth.isAuthenticated() && this.renderMyShoppingItems()}
       </div>
+    )
+  }
+
+  renderCreateSHoppinItemInput() {
+    return (
+      <Grid padded>
+        <Grid.Row>
+          <Grid.Column width={16}>
+            <Input
+              action={{
+                color: 'teal',
+                labelPosition: 'left',
+                icon: 'add',
+                content: 'New item',
+                onClick: this.onShoppinItemCreate
+              }}
+              fluid
+              actionPosition="left"
+              placeholder="Name"
+              onChange={this.handleNameChange}
+            />
+          </Grid.Column>
+          <Grid.Column width={16}>
+            <Input
+              fluid
+              actionPosition="left"
+              placeholder="Description"
+              onChange={this.handleDescriptionChange}
+            />
+          </Grid.Column>
+          <Grid.Column width={16}>
+            <Input
+              fluid
+              actionPosition="left"
+              placeholder="Price"
+              onChange={this.handlePriceChange}
+            />
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
     )
   }
 
@@ -193,4 +265,15 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
     )
   }
 
+}
+function TryParseInt(str: any,defaultValue: number) {
+  var retValue = defaultValue;
+  if(str !== null) {
+      if(str.length > 0) {
+          if (!isNaN(str)) {
+              retValue = parseInt(str);
+          }
+      }
+  }
+  return retValue;
 }
