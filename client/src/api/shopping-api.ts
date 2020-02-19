@@ -1,5 +1,6 @@
 import { apiEndpoint } from '../config'
 import { ShoppingItem } from '../types/ShoppingItem';
+import { CreateShoppingItemRequest } from '../types/CreateShoppingItemRequest';
 import Axios from 'axios'
 
 export async function getVisibleShoppingItems(idToken: string): Promise<ShoppingItem[]> {
@@ -25,4 +26,17 @@ export async function getShoppingItemsOfUser(idToken: string): Promise<ShoppingI
   })
   console.log('ShoppingItems:', response.data)
   return response.data.items
+}
+
+export async function createShoppingItem(
+  idToken: string,
+  newShoppingItem: CreateShoppingItemRequest
+): Promise<ShoppingItem> {
+  const response = await Axios.post(`${apiEndpoint}/shoppingItem`,  JSON.stringify(newShoppingItem), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data.item
 }
