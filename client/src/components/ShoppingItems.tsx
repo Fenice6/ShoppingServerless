@@ -40,6 +40,20 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
     this.setState({ newShoppingItemName: event.target.value })
   }
 
+  onShoppingItemDelete = async (shoppingId: string) => {
+    try {
+      await deleteShoppingItem(this.props.auth.getIdToken(), shoppingId)
+      this.setState({
+        visibleShoppingItems: this.state.visibleShoppingItems.filter(shoppingItem => shoppingItem.shoppingId != shoppingId)
+      })
+      this.setState({
+        myShoppingItems: this.state.myShoppingItems.filter(shoppingItem => shoppingItem.shoppingId != shoppingId)
+      })
+    } catch {
+      alert('Shopping Item deletion failed')
+    }
+  }
+
   async componentDidMount() {
     try {
       const visibleShoppingItems = await getVisibleShoppingItems()
@@ -161,6 +175,7 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
                 (<Button
                   icon
                   color="red"
+                  onClick={() => this.onShoppingItemDelete(shoppinItem.shoppingId)}
                 >
                   <Icon name="delete" />
                 </Button>)}
