@@ -5,6 +5,7 @@ import { Grid, Menu, Segment } from 'semantic-ui-react'
 import Auth from './auth/Auth'
 import { LogIn } from './components/LogIn'
 import { NotFound } from './components/NotFound'
+import { ShoppingItems } from './components/ShoppingItems'
 
 export interface AppProps {}
 
@@ -86,6 +87,14 @@ export default class App extends Component<AppProps, AppState> {
 
     return (
       <Switch>
+        <Route
+          path="/"
+          exact
+          render={props => {
+            return <ShoppingItems {...props} auth={this.props.auth} />
+          }}
+        />
+
         <Route component={NotFound} />
       </Switch>
     )
