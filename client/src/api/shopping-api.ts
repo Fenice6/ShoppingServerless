@@ -33,6 +33,8 @@ export async function createShoppingItem(
   idToken: string,
   newShoppingItem: CreateShoppingItemRequest
 ): Promise<ShoppingItem> {
+  if(newShoppingItem.price < 0)
+    throw new Error("Price not valid")
   const response = await Axios.post(`${apiEndpoint}/shoppingItem`,  JSON.stringify(newShoppingItem), {
     headers: {
       'Content-Type': 'application/json',
