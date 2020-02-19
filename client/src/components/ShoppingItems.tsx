@@ -1,4 +1,5 @@
 import { History } from 'history'
+import update from 'immutability-helper'
 import * as React from 'react'
 import {
   Button,
@@ -82,6 +83,39 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
       })
     } catch {
       alert('Shopping Item deletion failed')
+    }
+  }
+
+  onShoppingItemVisibleCheck = async (pos: number) => {
+    try {
+      const shoppingItem = this.state.myShoppingItems[pos]
+      if(shoppingItem.status!=0 && shoppingItem.status!=1)
+        throw new Error("Wrong status")
+      await patchShoppingItem(this.props.auth.getIdToken(), shoppingItem.shoppingId, {
+        name: shoppingItem.name,
+        description: shoppingItem.description,
+        price: shoppingItem.price,
+        hidden: shoppingItem.status==0 ? true : false 
+      })
+      if(shoppingItem.status===0){
+        this.setState({
+          myShoppingItems: update(this.state.myShoppingItems, {
+            [pos]: { status: { $set: shoppingItem.status=1 } }
+          }),
+          visibleShoppingItems: this.state.visibleShoppingItems.filter(si => si.shoppingId != shoppingItem.shoppingId)
+        })
+      }
+      else
+        if(shoppingItem.status===1){
+          this.setState({
+            myShoppingItems: update(this.state.myShoppingItems, {
+              [pos]: { status: { $set: shoppingItem.status=0 } }
+            }),
+            visibleShoppingItems: await getVisibleShoppingItems()
+          })
+        }
+    } catch {
+      alert('Shopping item change visible failed')
     }
   }
 
@@ -223,6 +257,11 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
           return (
             <Grid.Row key={shoppinItem.shoppingId}>
               <Grid.Column width={1} verticalAlign="middle">
+                <Checkbox
+                  onChange={() => this.onShoppingItemVisibleCheck(pos)}
+                  checked={shoppinItem.status===0}
+                  disabled={shoppinItem.status>1}
+                />
               </Grid.Column>
               <Grid.Column width={10} verticalAlign="middle">
                 {shoppinItem.name}
