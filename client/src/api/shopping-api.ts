@@ -66,3 +66,16 @@ export async function deleteShoppingItem(
     }
   })
 }
+
+export async function getUploadUrl(
+  idToken: string,
+  shoppingId: string
+): Promise<string> {
+  const response = await Axios.post(`${apiEndpoint}/shoppingItem/${shoppingId}/attachment`, '', {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data.uploadUrl
+}
