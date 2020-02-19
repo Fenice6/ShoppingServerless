@@ -4,7 +4,7 @@ import { CreateShoppingItemRequest } from '../types/CreateShoppingItemRequest';
 import Axios from 'axios'
 import { UpdateShoppingItemRequest } from '../types/UpdateShoppingItemRequest';
 
-export async function getVisibleShoppingItems(idToken: string): Promise<ShoppingItem[]> {
+export async function getVisibleShoppingItems(): Promise<ShoppingItem[]> {
   console.log('Fetching visible shopping items')
 
   const response = await Axios.get(`${apiEndpoint}/shoppingItems`, {
