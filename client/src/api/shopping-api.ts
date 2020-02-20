@@ -4,7 +4,7 @@ import { CreateShoppingItemRequest } from '../types/CreateShoppingItemRequest';
 import Axios from 'axios'
 import { UpdateShoppingItemRequest } from '../types/UpdateShoppingItemRequest';
 
-export async function getVisibleShoppingItems(idToken: string): Promise<ShoppingItem[]> {
+export async function getVisibleShoppingItems(): Promise<ShoppingItem[]> {
   console.log('Fetching visible shopping items')
 
   const response = await Axios.get(`${apiEndpoint}/shoppingItems`, {
@@ -33,6 +33,8 @@ export async function createShoppingItem(
   idToken: string,
   newShoppingItem: CreateShoppingItemRequest
 ): Promise<ShoppingItem> {
+  if(newShoppingItem.price < 0)
+    throw new Error("Price not valid")
   const response = await Axios.post(`${apiEndpoint}/shoppingItem`,  JSON.stringify(newShoppingItem), {
     headers: {
       'Content-Type': 'application/json',
