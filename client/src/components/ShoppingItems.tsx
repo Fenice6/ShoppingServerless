@@ -16,6 +16,7 @@ import {
 import { createShoppingItem, deleteShoppingItem, getVisibleShoppingItems, patchShoppingItem, getShoppingItemsOfUser, buyShoppingItem } from '../api/shopping-api'
 import Auth from '../auth/Auth'
 import { ShoppingItem } from '../types/ShoppingItem'
+import { ShoppingItemStatusEnum } from '../types/enums/ShoppingItemStatusEnum'
 
 interface ShoppingProps {
   auth: Auth
@@ -103,27 +104,27 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
   onShoppingItemVisibleCheck = async (pos: number) => {
     try {
       const shoppingItem = this.state.myShoppingItems[pos]
-      if(shoppingItem.status!==0 && shoppingItem.status!==1)
+      if(shoppingItem.status!==ShoppingItemStatusEnum.Available && shoppingItem.status!==ShoppingItemStatusEnum.Hidden)
         throw new Error("Wrong status")
       await patchShoppingItem(this.props.auth.getIdToken(), shoppingItem.shoppingId, {
         name: shoppingItem.name,
         description: shoppingItem.description,
         price: shoppingItem.price,
-        hidden: shoppingItem.status===0 ? true : false 
+        hidden: shoppingItem.status===ShoppingItemStatusEnum.Available ? true : false 
       })
-      if(shoppingItem.status===0){
+      if(shoppingItem.status===ShoppingItemStatusEnum.Available){
         this.setState({
           myShoppingItems: update(this.state.myShoppingItems, {
-            [pos]: { status: { $set: shoppingItem.status=1 } }
+            [pos]: { status: { $set: shoppingItem.status=ShoppingItemStatusEnum.Hidden } }
           }),
           visibleShoppingItems: this.state.visibleShoppingItems.filter(si => si.shoppingId !== shoppingItem.shoppingId)
         })
       }
       else
-        if(shoppingItem.status===1){
+        if(shoppingItem.status===ShoppingItemStatusEnum.Hidden){
           this.setState({
             myShoppingItems: update(this.state.myShoppingItems, {
-              [pos]: { status: { $set: shoppingItem.status=0 } }
+              [pos]: { status: { $set: shoppingItem.status=ShoppingItemStatusEnum.Available } }
             }),
             visibleShoppingItems: await getVisibleShoppingItems()
           })
@@ -282,8 +283,8 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
               <Grid.Column width={1} verticalAlign="middle">
                 <Checkbox
                   onChange={() => this.onShoppingItemVisibleCheck(pos)}
-                  checked={shoppinItem.status===0}
-                  disabled={shoppinItem.status>1}
+                  checked={shoppinItem.status===ShoppingItemStatusEnum.Available}
+                  disabled={shoppinItem.status>ShoppingItemStatusEnum.Hidden}
                 />
               </Grid.Column>
               <Grid.Column width={10} verticalAlign="middle">
