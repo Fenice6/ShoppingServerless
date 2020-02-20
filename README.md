@@ -4,7 +4,14 @@ This is a serverless application to buy nd sell items. It's possible view **all*
 
 The project is split into two parts:
 1. [Backend] (/backend) a Node-JS serverless application(typescript).
-2. [Frontend] (/frontend) a basic React client web application, used to test backend.
+2. [Frontend] (/client) a basic React client web application, used to test backend.
+
+All user can display all shopping items. If an user is authenticated he can:
+- _create_ new shopping item.
+- _hide_ an existing item.
+- _delete_ an existing item.
+- _upload_ an image for an existing item.
+- _buy_ an item.
 
 ## Getting Setup
 
