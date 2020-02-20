@@ -53,6 +53,10 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
     this.setState({ newShoppingItemPrice: TryParseInt(event.target.value,-1) })
   }
 
+  onEditButtonClick = (shoppingId: string) => {
+    this.props.history.push(`/shoppingItems/${shoppingId}/edit`)
+  }
+
   onShoppinItemCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
       const newShoppingItem = await createShoppingItem(this.props.auth.getIdToken(), {
@@ -277,6 +281,7 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
                 <Button
                   icon
                   color="blue"
+                  onClick={() => this.onEditButtonClick(shoppinItem.shoppingId)}
                 >
                   <Icon name="pencil" />
                 </Button>)}
