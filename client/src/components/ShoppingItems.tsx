@@ -13,7 +13,7 @@ import {
   Loader
 } from 'semantic-ui-react'
 
-import { createShoppingItem, deleteShoppingItem, getVisibleShoppingItems, patchShoppingItem, getShoppingItemsOfUser } from '../api/shopping-api'
+import { createShoppingItem, deleteShoppingItem, getVisibleShoppingItems, patchShoppingItem, getShoppingItemsOfUser, buyShoppingItem } from '../api/shopping-api'
 import Auth from '../auth/Auth'
 import { ShoppingItem } from '../types/ShoppingItem'
 
@@ -80,10 +80,20 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
     try {
       await deleteShoppingItem(this.props.auth.getIdToken(), shoppingId)
       this.setState({
-        visibleShoppingItems: this.state.visibleShoppingItems.filter(shoppingItem => shoppingItem.shoppingId != shoppingId)
+        visibleShoppingItems: this.state.visibleShoppingItems.filter(shoppingItem => shoppingItem.shoppingId !== shoppingId),
+        myShoppingItems: this.state.myShoppingItems.filter(shoppingItem => shoppingItem.shoppingId !== shoppingId)
       })
+    } catch {
+      alert('Shopping Item deletion failed')
+    }
+  }
+
+  onShoppingItemBuy = async (shoppingId: string) => {
+    try {
+      await buyShoppingItem(this.props.auth.getIdToken(), shoppingId)
       this.setState({
-        myShoppingItems: this.state.myShoppingItems.filter(shoppingItem => shoppingItem.shoppingId != shoppingId)
+        visibleShoppingItems: this.state.visibleShoppingItems.filter(shoppingItem => shoppingItem.shoppingId !== shoppingId),
+        myShoppingItems: this.props.auth.isAuthenticated() ? await getShoppingItemsOfUser(this.props.auth.getIdToken()):[]
       })
     } catch {
       alert('Shopping Item deletion failed')
@@ -93,20 +103,20 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
   onShoppingItemVisibleCheck = async (pos: number) => {
     try {
       const shoppingItem = this.state.myShoppingItems[pos]
-      if(shoppingItem.status!=0 && shoppingItem.status!=1)
+      if(shoppingItem.status!==0 && shoppingItem.status!==1)
         throw new Error("Wrong status")
       await patchShoppingItem(this.props.auth.getIdToken(), shoppingItem.shoppingId, {
         name: shoppingItem.name,
         description: shoppingItem.description,
         price: shoppingItem.price,
-        hidden: shoppingItem.status==0 ? true : false 
+        hidden: shoppingItem.status===0 ? true : false 
       })
       if(shoppingItem.status===0){
         this.setState({
           myShoppingItems: update(this.state.myShoppingItems, {
             [pos]: { status: { $set: shoppingItem.status=1 } }
           }),
-          visibleShoppingItems: this.state.visibleShoppingItems.filter(si => si.shoppingId != shoppingItem.shoppingId)
+          visibleShoppingItems: this.state.visibleShoppingItems.filter(si => si.shoppingId !== shoppingItem.shoppingId)
         })
       }
       else
@@ -238,6 +248,15 @@ export class ShoppingItems extends React.PureComponent<ShoppingProps, ShoppingSt
                 {shoppinItem.price}
               </Grid.Column>
               <Grid.Column width={1} floated="right">
+                {this.props.auth.isAuthenticated() &&
+                  (
+                  <Button
+                    icon
+                    color="green"
+                    onClick={() => this.onShoppingItemBuy(shoppinItem.shoppingId)}
+                  >
+                    <Icon name="shopping cart" />
+                  </Button>)}
               </Grid.Column>
               <Grid.Column width={1} floated="right">
               </Grid.Column>
