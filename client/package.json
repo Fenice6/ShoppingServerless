@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "dateformat": "^3.0.3",
     "fsevents": "^2.1.2",
     "immutability-helper": "^3.0.1",
